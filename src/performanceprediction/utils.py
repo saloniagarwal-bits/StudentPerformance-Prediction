@@ -1,12 +1,13 @@
 import os
 import sys
+from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error
 from src.performanceprediction.exception import CustomException
 from src.performanceprediction.logger import logging
+from sklearn.model_selection import RandomizedSearchCV,GridSearchCV
 import pandas as pd
 from dotenv import load_dotenv
 import pymysql
 import pickle
-import numpy
 
 load_dotenv()
 
@@ -47,3 +48,30 @@ def save_object(file_path, obj):
 
     except Exception as ex:
         raise CustomException(ex,sys)
+    
+def evaluate_models(X_train, y_train, X_test, y_test, models, param):
+    try:
+        report = {}
+
+        for i in range(len(models)):
+            model = list(models.values())[i]
+            para = param[list(models.keys())[i]]
+
+            grid_cv = GridSearchCV(model, para, cv=3)
+            grid_cv.fit(X_train, y_train)
+
+            model.set_params(**grid_cv.best_params_)
+            model.fit(X_train, y_train)
+
+            y_train_pred = model.predict(X_train)
+            y_test_pred = model.predict(X_test)
+
+            train_score = r2_score(y_train, y_train_pred)
+            test_score = r2_score(y_test, y_test_pred)
+
+            report[list(models.keys())[i]] = test_score
+
+        return report
+
+    except Exception as ex:
+        raise CustomException(ex, sys)
