@@ -1,6 +1,7 @@
 import sys
 import pandas as pd
 from src.performanceprediction.exception import CustomException
+from src.performanceprediction.logger import logging
 from src.performanceprediction.utils import load_object
 
 class PredictionPipeline:
@@ -16,6 +17,7 @@ class PredictionPipeline:
 
             data_scaled = preprocessor.transform(features)
             pred = model.predict(data_scaled)
+            logging.info(f'Prediction result is {pred[0]}')
             return pred
         except Exception as ex:
             raise CustomException(ex, sys)
